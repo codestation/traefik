@@ -34,6 +34,7 @@ type Router struct {
 	Rule        string           `json:"rule,omitempty" toml:"rule,omitempty" yaml:"rule,omitempty"`
 	Priority    int              `json:"priority,omitempty" toml:"priority,omitempty,omitzero" yaml:"priority,omitempty"`
 	TLS         *RouterTLSConfig `json:"tls,omitempty" toml:"tls,omitempty" yaml:"tls,omitempty" label:"allowEmpty"`
+	Base        string           `json:"base,omitempty" toml:"base,omitempty" yaml:"base,omitempty"`
 }
 
 // +k8s:deepcopy-gen=true

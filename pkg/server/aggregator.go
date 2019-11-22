@@ -1,11 +1,32 @@
 package server
 
 import (
+	"strings"
+
 	"github.com/containous/traefik/v2/pkg/config/dynamic"
 	"github.com/containous/traefik/v2/pkg/log"
 	"github.com/containous/traefik/v2/pkg/server/internal"
 	"github.com/containous/traefik/v2/pkg/tls"
+	"github.com/imdario/mergo"
 )
+
+func getBaseRouter(routerName string, routeProvider string, config dynamic.Configurations) *dynamic.Router {
+	if routerName != "" {
+		var baseProvider string
+		parts := strings.Split(routerName, "@")
+		if len(parts) == 1 {
+			baseProvider = routeProvider
+		} else {
+			baseProvider = parts[1]
+		}
+
+		if config[baseProvider] != nil && config[baseProvider].HTTP != nil {
+			return config[baseProvider].HTTP.Routers[parts[0]]
+		}
+	}
+
+	return nil
+}
 
 func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configuration {
 	conf := dynamic.Configuration{
@@ -28,7 +49,28 @@ func mergeConfiguration(configurations dynamic.Configurations) dynamic.Configura
 	for provider, configuration := range configurations {
 		if configuration.HTTP != nil {
 			for routerName, router := range configuration.HTTP.Routers {
-				conf.HTTP.Routers[internal.MakeQualifiedName(provider, routerName)] = router
+				baseRouter := getBaseRouter(router.Base, provider, configurations)
+				var updatedRouter *dynamic.Router
+
+				if baseRouter != nil {
+					// only allows to use base routers that doesn't inherit from another router to prevent configuration loops
+					if baseRouter.Base == "" {
+						// do not touch the original configuration
+						updatedRouter = router.DeepCopy()
+
+						if err := mergo.Merge(updatedRouter, baseRouter); err != nil {
+							log.WithoutContext().Errorf("Cannot merge base router with %s: %s", routerName, err)
+							updatedRouter = router
+						}
+					} else {
+						log.WithoutContext().Errorf("The router %s@%s is not allowed to use %s as a base", routerName, provider, router.Base)
+						updatedRouter = router
+					}
+				} else {
+					updatedRouter = router
+				}
+
+				conf.HTTP.Routers[internal.MakeQualifiedName(provider, routerName)] = updatedRouter
 			}
 			for middlewareName, middleware := range configuration.HTTP.Middlewares {
 				conf.HTTP.Middlewares[internal.MakeQualifiedName(provider, middlewareName)] = middleware

@@ -72,6 +72,18 @@
           </div>
         </div>
       </q-card-section>
+      <q-card-section v-if="data.base">
+        <div class="row items-start no-wrap">
+          <div class="col">
+            <div class="text-subtitle2">BASE</div>
+            <q-chip
+              dense
+              class="app-chip app-chip-wrap app-chip-name">
+              {{ getRouterId() }}
+            </q-chip>
+          </div>
+        </div>
+      </q-card-section>
       <q-card-section v-if="data.error">
         <div class="row items-start no-wrap">
           <div class="col">
@@ -105,6 +117,14 @@ export default {
       }
 
       return `${this.data.service}@${this.data.provider}`
+    },
+    getRouterId () {
+      const words = this.data.base.split('@')
+      if (words.length === 2) {
+        return this.data.base
+      }
+
+      return `${this.data.base}@${this.data.provider}`
     }
   },
   filters: {

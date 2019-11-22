@@ -51,6 +51,7 @@ require (
 	github.com/hashicorp/consul/api v1.3.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/huandu/xstrings v1.2.0 // indirect
+	github.com/imdario/mergo v0.3.5
 	github.com/influxdata/influxdb1-client v0.0.0-20190809212627-fc22c7df067e
 	github.com/instana/go-sensor v1.5.0
 	github.com/libkermit/compose v0.0.0-20171122111507-c04e39c026ad
